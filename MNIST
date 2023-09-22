@@ -1,0 +1,53 @@
+#%%
+from keras.datasets import mnist
+#%%
+import numpy as np
+from sklearn import svm
+from matplotlib import pyplot as plt
+from sklearn.metrics import confusion_matrix
+import tensorflow as tf
+from sklearn.metrics import f1_score
+#%%
+(train_X, train_y), (test_X, test_y) = mnist.load_data()
+#%%
+plt.imshow(train_X[2])
+plt.show()
+# %%
+#code for SVM training
+#first flatten train and test 2d arrays into 1d array
+flatten_train_X=train_X.reshape(train_X.shape[0],-1)
+flatten_test_X=test_X.reshape(test_X.shape[0],-1)
+
+print(flatten_train_X.shape)
+# %%
+svm_model=svm.SVC()
+svm_model.fit(flatten_train_X, train_y)
+# %%
+predictions=svm_model.predict(flatten_test_X)
+# %%
+results=confusion_matrix(test_y, predictions)
+print(results)
+# %%
+cnn_model = tf.keras.Sequential([
+    tf.keras.layers.Flatten(input_shape=(28, 28)),
+    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dense(10)
+])
+cnn_model.compile(optimizer='adam',
+              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+              metrics=['accuracy'])
+#%%
+cnn_model.fit(train_X, train_y, epochs=10)
+# %%
+test_loss, test_acc = cnn_model.evaluate(test_X,  test_y, verbose=2)
+print('\nTest accuracy:', test_acc)
+# %%
+model=tf.keras.Sequential([cnn_model, tf.keras.layers.Softmax()])
+probabilities=model.predict(test_X)
+predictions=np.argmax(probabilities, axis=1)
+results=confusion_matrix(test_y, predictions)
+print(results)
+# %%
+cnn_f1_score=f1_score(test_y,predictions, average='micro')
+print('the f1_score for the DNN was {}'.format(cnn_f1_score))
+# %%
